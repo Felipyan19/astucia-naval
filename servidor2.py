@@ -19,6 +19,7 @@ def server2():
 
     print(f"Server 2 is listening on {host}:{port}")
     first_matrix_received = None  # Variable para almacenar la primera matriz recibida
+    client_scores = {} 
 
     while True:
         client_socket, addr = server_socket.accept()
@@ -40,22 +41,43 @@ def server2():
             
         else:
             # Comparar la matriz recibida con la primera matriz almacenada
-
             if compare_matrices(first_matrix_received, received_matrix):
                 print("Disparo acertado")
                 response = "Disparo acertado"
+                # Incrementar la puntuación del cliente
+                client_ip = addr[0]
+                if client_ip in client_scores:
+                    client_scores[client_ip] += 1
+                else:
+                    client_scores[client_ip] = 1
+                print(f"Puntuación de {client_ip}: {client_scores[client_ip]}")
+                # Envía la puntuación al servidor 3
+                send_score_to_server3(client_scores)
             else:
                 print("Disparo fallido")
                 response = "Disparo fallido"
 
         client_socket.send(response.encode('utf-8'))
-
         # Hacer algo con la matriz recibida, por ejemplo, imprimir en el servidor
-        print(f"data from client: {addr} in server 2")
+        print(f"Data from client: {addr} in server 1")
         for row in received_matrix:
             print(row)
 
         client_socket.close()
+
+def send_score_to_server3(scores):
+    # Establece la conexión con el servidor 3 y envía la puntuación
+    host = '127.0.0.1'
+    port = 123  # Puerto del Servidor 3
+
+    client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    client_socket.connect((host, port))
+
+    # Serializa y envía el diccionario de puntuación
+    serialized_scores = pickle.dumps(scores)
+    client_socket.send(serialized_scores)
+
+    client_socket.close()
 
 if __name__ == "__main__":
     server2()
